@@ -65,7 +65,7 @@ describe('ConfirmProvider', () => {
     await waitFor(() => expect(screen.getByTestId('result')).toHaveTextContent('false'))
 
     fireEvent.click(screen.getByText('abrir'))
-    fireEvent.keyDown(window, { key: 'Enter' })
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Confirmar' }), { key: 'Enter' })
     await waitFor(() => expect(screen.getByTestId('result')).toHaveTextContent('true'))
   })
 

@@ -49,7 +49,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     confirmRef.current?.focus()
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') close(false)
-      if (e.key === 'Enter') close(true)
+      if (e.key === 'Enter' && e.target === confirmRef.current) close(true)
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)

@@ -30,3 +30,6 @@ next-env.d.ts
 
 # prisma generated client
 /src/generated/
+
+# uploaded files
+/public/uploads/
