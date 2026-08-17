@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { requirePermission, serverError, badRequest } from '@/lib/api-helpers'
-import { createEmployee, updateEmployee, deleteEmployee, listEmployees, getEmployeeStats } from '@/services/employees.service'
+import { createEmployee, updateEmployee, deleteEmployee, listEmployees, getEmployeeStats, createLoginUser, updateLoginUser } from '@/services/employees.service'
+import { hashPassword } from '@/services/auth.service'
 import { employeeSchema, parseError } from '@/lib/validators'
 import { logAudit } from '@/services/audit.service'
 
@@ -36,7 +37,20 @@ export async function POST(request: NextRequest) {
     const parsed = employeeSchema.safeParse(body)
     if (!parsed.success) return badRequest(parseError(parsed.error))
 
-    const employee = await createEmployee(checked.companyId, parsed.data)
+    const { password, ...employeeData } = parsed.data
+    if (password) {
+      if (!employeeData.email) {
+        return badRequest('Para dar acceso por correo, el empleado debe tener un correo')
+      }
+      await createLoginUser({
+        companyId: checked.companyId,
+        name: employeeData.name,
+        email: employeeData.email,
+        passwordHash: await hashPassword(password),
+      })
+    }
+
+    const employee = await createEmployee(checked.companyId, employeeData)
     await logAudit({
       userId: checked.userId,
       companyId: checked.companyId,
@@ -62,7 +76,20 @@ export async function PUT(request: NextRequest) {
     const parsed = employeeSchema.safeParse(body)
     if (!parsed.success) return badRequest(parseError(parsed.error))
 
-    const employee = await updateEmployee(id, checked.companyId, parsed.data)
+    const { password, ...employeeData } = parsed.data
+    if (password) {
+      if (!employeeData.email) {
+        return badRequest('Para cambiar la contraseña el empleado debe tener un correo')
+      }
+      await updateLoginUser({
+        companyId: checked.companyId,
+        name: employeeData.name,
+        email: employeeData.email,
+        passwordHash: await hashPassword(password),
+      })
+    }
+
+    const employee = await updateEmployee(id, checked.companyId, employeeData)
     await logAudit({
       userId: checked.userId,
       companyId: checked.companyId,

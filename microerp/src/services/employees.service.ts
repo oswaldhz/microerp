@@ -15,6 +15,55 @@ export async function createEmployee(companyId: string, data: EmployeeInput) {
   })
 }
 
+export async function createLoginUser(input: {
+  companyId: string
+  name: string
+  email: string
+  passwordHash: string
+}) {
+  const existing = await prisma.user.findUnique({ where: { email: input.email } })
+  if (existing) throw new Error('Ya existe un usuario con ese correo')
+  return prisma.user.create({
+    data: {
+      companyId: input.companyId,
+      name: input.name,
+      email: input.email,
+      passwordHash: input.passwordHash,
+      role: 'VENDEDOR',
+    },
+    select: { id: true, name: true, email: true, role: true, active: true },
+  })
+}
+
+export async function updateLoginUser(input: {
+  companyId: string
+  name: string
+  email: string
+  passwordHash: string
+}) {
+  const existing = await prisma.user.findUnique({ where: { email: input.email } })
+  if (existing && existing.companyId !== input.companyId) {
+    throw new Error('Ya existe un usuario con ese correo en otra empresa')
+  }
+  if (existing) {
+    return prisma.user.update({
+      where: { id: existing.id },
+      data: { name: input.name, passwordHash: input.passwordHash, active: true },
+      select: { id: true, name: true, email: true, role: true, active: true },
+    })
+  }
+  return prisma.user.create({
+    data: {
+      companyId: input.companyId,
+      name: input.name,
+      email: input.email,
+      passwordHash: input.passwordHash,
+      role: 'VENDEDOR',
+    },
+    select: { id: true, name: true, email: true, role: true, active: true },
+  })
+}
+
 export async function updateEmployee(employeeId: string, companyId: string, data: EmployeeInput) {
   const existing = await prisma.employee.findFirst({ where: { id: employeeId, companyId } })
   if (!existing) throw new Error('Empleado no encontrado')

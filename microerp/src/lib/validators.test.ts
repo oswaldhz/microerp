@@ -42,3 +42,39 @@ describe('validación de teléfono (canónico de 10 dígitos)', () => {
     expect(res.success).toBe(false)
   })
 })
+
+describe('política de contraseña de empleado', () => {
+  const base = { name: 'Ana', position: 'Vendedora', salary: 30000, commission: 5 }
+
+  it('acepta una contraseña fuerte', () => {
+    expect(employeeSchema.safeParse({ ...base, password: 'Vendedor123!' }).success).toBe(true)
+  })
+
+  it('rechaza menos de 8 caracteres', () => {
+    const res = employeeSchema.safeParse({ ...base, password: 'Abc123!' })
+    expect(res.success).toBe(false)
+    if (!res.success) expect(res.error.issues[0].message).toBe('La contraseña debe tener al menos 8 caracteres')
+  })
+
+  it('rechaza contraseñas sin letras', () => {
+    const res = employeeSchema.safeParse({ ...base, password: '12345678' })
+    expect(res.success).toBe(false)
+    if (!res.success) expect(res.error.issues[0].message).toBe('La contraseña debe incluir letras')
+  })
+
+  it('rechaza contraseñas sin números', () => {
+    const res = employeeSchema.safeParse({ ...base, password: 'abcdefgh' })
+    expect(res.success).toBe(false)
+    if (!res.success) expect(res.error.issues[0].message).toBe('La contraseña debe incluir al menos un número')
+  })
+
+  it('rechaza más de 72 caracteres', () => {
+    const res = employeeSchema.safeParse({ ...base, password: `${'A1'.repeat(37)}x` })
+    expect(res.success).toBe(false)
+  })
+
+  it('acepta contraseña ausente o vacía (sin cambio)', () => {
+    expect(employeeSchema.safeParse(base).success).toBe(true)
+    expect(employeeSchema.safeParse({ ...base, password: '' }).success).toBe(true)
+  })
+})

@@ -9,7 +9,7 @@ import { formatPhone, normalizePhone } from '@/lib/utils'
 export type Field = {
   key: string
   label: string
-  type?: 'text' | 'number' | 'email' | 'select' | 'date' | 'tel'
+  type?: 'text' | 'number' | 'email' | 'select' | 'date' | 'tel' | 'password'
   options?: { value: string; label: string }[]
   required?: boolean
 }
@@ -75,8 +75,14 @@ export default function CrudTable<T extends { id: string }>({
     [fields],
   )
 
+  const passwordKeys = useMemo(
+    () => new Set(fields.filter((f) => f.type === 'password').map((f) => f.key)),
+    [fields],
+  )
+
   function renderCell(c: Column<T>, row: T): React.ReactNode {
     const raw = String((row as Record<string, unknown>)[c.key] ?? '—')
+    if (passwordKeys.has(c.key) && raw !== '—') return '••••••••'
     return telKeys.has(c.key) && raw !== '—' ? formatPhone(raw) : raw
   }
 
@@ -89,9 +95,12 @@ export default function CrudTable<T extends { id: string }>({
   async function handleSave() {
     const url = creating ? `/api/${entityKey}` : `/api/${entityKey}?id=${editing?.id}`
     const method = creating ? 'POST' : 'PUT'
-    const payload = Object.fromEntries(
-      fields.map((f) => [f.key, f.type === 'tel' ? normalizePhone(form[f.key]) : form[f.key]]),
-    )
+    const payload: Record<string, string> = {}
+    for (const f of fields) {
+      const value = form[f.key] ?? ''
+      if (f.type === 'password' && !value) continue
+      payload[f.key] = f.type === 'tel' ? normalizePhone(value) : value
+    }
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -121,6 +130,7 @@ export default function CrudTable<T extends { id: string }>({
     setForm(
       Object.fromEntries(
         fields.map((f) => {
+          if (f.type === 'password') return [f.key, '']
           const value = String((row as Record<string, unknown>)[f.key] ?? '')
           return [f.key, f.type === 'tel' ? formatPhone(value) : value]
         }),
@@ -176,10 +186,11 @@ export default function CrudTable<T extends { id: string }>({
                   </select>
                 ) : (
                   <input
-                    type={f.type ?? 'text'}
-                    required={f.required}
+                    type={f.type === 'password' ? 'password' : (f.type ?? 'text')}
+                    required={f.type === 'password' ? creating && f.required : f.required}
+                    autoComplete={f.type === 'password' ? 'new-password' : undefined}
                     inputMode={f.type === 'tel' ? 'tel' : undefined}
-                    maxLength={f.type === 'tel' ? 14 : undefined}
+                    maxLength={f.type === 'tel' ? 14 : f.type === 'password' ? 72 : undefined}
                     value={form[f.key] ?? ''}
                     onChange={(e) =>
                       setForm({
@@ -187,7 +198,7 @@ export default function CrudTable<T extends { id: string }>({
                         [f.key]: f.type === 'tel' ? formatPhone(e.target.value) : e.target.value,
                       })
                     }
-                    placeholder={f.label}
+                    placeholder={f.type === 'password' && !creating ? 'Dejar vacío para no cambiar' : f.label}
                     className={inputCls}
                   />
                 )}
