@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { emit } from '@/lib/session-hub'
 
 export interface EmployeeInput {
   name: string
@@ -109,6 +110,7 @@ export async function setEmployeeStatus(
       throw new Error('No puedes darte de baja a ti mismo')
     }
     await prisma.user.update({ where: { id: user.id }, data: { active } })
+    if (!active) emit(user.id, JSON.stringify({ type: 'revoked' }))
   }
 
   return employee
