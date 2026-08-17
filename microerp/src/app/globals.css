@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/*
+ * Retail Pro theme — themable brand tokens.
+ * To rebrand for another client, change the six --brand-* variables
+ * (and optionally --paper) here; every component derives from them.
+ */
+:root {
+  --brand-ink: #13261c;
+  --brand-forest: #1b4332;
+  --brand-leaf: #2d6a4f;
+  --brand-mint: #e6f2ec;
+  --brand-mint-strong: #cfe5da;
+  --paper: #f7f5f0;
+  --surface: #ffffff;
+  --ink: #1c1917;
+  --muted: #78716c;
+  --line: #e7e5e4;
+  --line-strong: #d6d3d1;
+}
+
+@theme inline {
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-forest: var(--brand-forest);
+  --color-brand-leaf: var(--brand-leaf);
+  --color-brand-mint: var(--brand-mint);
+  --color-brand-mint-strong: var(--brand-mint-strong);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-sora);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-sora), var(--font-inter), sans-serif;
+}
+
+/* Money columns line up like a receipt */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Receipt-ticket perforated edge */
+.receipt-edge {
+  position: relative;
+}
+.receipt-edge::before,
+.receipt-edge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background-image: radial-gradient(circle at 6px 6px, transparent 5px, var(--surface) 6px);
+  background-size: 12px 12px;
+  pointer-events: none;
+}
+.receipt-edge::before {
+  top: -6px;
+}
+.receipt-edge::after {
+  bottom: -6px;
+  transform: rotate(180deg);
+}
