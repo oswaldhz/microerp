@@ -51,6 +51,8 @@ export default function PersonalizacionPage() {
       setAppName(next)
       toast.success(clear ? 'Nombre ocultado — solo se muestra el icono' : 'Nombre de la marca guardado')
       await refresh()
+    } catch {
+      toast.error('Error de conexión')
     } finally {
       setSavingName(false)
     }
@@ -71,6 +73,8 @@ export default function PersonalizacionPage() {
       toast.success('Foto de perfil actualizada')
       setSelectedFile(null)
       await refresh()
+    } catch {
+      toast.error('Error de conexión')
     } finally {
       setUploading(false)
     }
