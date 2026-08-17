@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Inbox, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
+import { formatPhone, normalizePhone } from '@/lib/utils'
 
 export type Field = {
   key: string
   label: string
-  type?: 'text' | 'number' | 'email' | 'select' | 'date'
+  type?: 'text' | 'number' | 'email' | 'select' | 'date' | 'tel'
   options?: { value: string; label: string }[]
   required?: boolean
 }
@@ -69,6 +70,16 @@ export default function CrudTable<T extends { id: string }>({
     return rows.filter((r) => JSON.stringify(r).toLowerCase().includes(q))
   }, [rows, query])
 
+  const telKeys = useMemo(
+    () => new Set(fields.filter((f) => f.type === 'tel').map((f) => f.key)),
+    [fields],
+  )
+
+  function renderCell(c: Column<T>, row: T): React.ReactNode {
+    const raw = String((row as Record<string, unknown>)[c.key] ?? '—')
+    return telKeys.has(c.key) && raw !== '—' ? formatPhone(raw) : raw
+  }
+
   function resetForm() {
     setForm({})
     setCreating(false)
@@ -78,10 +89,13 @@ export default function CrudTable<T extends { id: string }>({
   async function handleSave() {
     const url = creating ? `/api/${entityKey}` : `/api/${entityKey}?id=${editing?.id}`
     const method = creating ? 'POST' : 'PUT'
+    const payload = Object.fromEntries(
+      fields.map((f) => [f.key, f.type === 'tel' ? normalizePhone(form[f.key]) : form[f.key]]),
+    )
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     })
     const data = await res.json()
     if (!res.ok) {
@@ -106,7 +120,10 @@ export default function CrudTable<T extends { id: string }>({
     setCreating(false)
     setForm(
       Object.fromEntries(
-        fields.map((f) => [f.key, String((row as Record<string, unknown>)[f.key] ?? '')]),
+        fields.map((f) => {
+          const value = String((row as Record<string, unknown>)[f.key] ?? '')
+          return [f.key, f.type === 'tel' ? formatPhone(value) : value]
+        }),
       ),
     )
   }
@@ -161,8 +178,15 @@ export default function CrudTable<T extends { id: string }>({
                   <input
                     type={f.type ?? 'text'}
                     required={f.required}
+                    inputMode={f.type === 'tel' ? 'tel' : undefined}
+                    maxLength={f.type === 'tel' ? 14 : undefined}
                     value={form[f.key] ?? ''}
-                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        [f.key]: f.type === 'tel' ? formatPhone(e.target.value) : e.target.value,
+                      })
+                    }
                     placeholder={f.label}
                     className={inputCls}
                   />
@@ -206,7 +230,7 @@ export default function CrudTable<T extends { id: string }>({
               <tr key={row.id} className="border-b border-line last:border-0 hover:bg-paper/70">
                 {columns.map((c) => (
                   <td key={c.key} className={`px-4 py-2 text-ink ${c.className ?? ''}`}>
-                    {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? '—')}
+                    {c.render ? c.render(row) : renderCell(c, row)}
                   </td>
                 ))}
                 <td className="px-4 py-2">
