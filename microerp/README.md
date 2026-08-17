@@ -4,7 +4,7 @@ Sistema ERP para pequeñas empresas — **Programación III (ITLA)** · Next.js 
 
 Cubre ventas (POS), inventario, clientes, proveedores, empleados, gastos, facturación, órdenes de compra, reportes, dashboard, notificaciones y auditoría, con autenticación JWT y control de acceso por roles (ADMIN, VENDEDOR, CONTADOR).
 
-> Documentación completa del proyecto: [`../docs/GUIA_COMPLETA.md`](../docs/GUIA_COMPLETA.md) · Backlog de historias (CSV): [`../docs/jira-backlog.csv`](../docs/jira-backlog.csv)
+> Documentación completa del proyecto: [`../docs/GUIA_COMPLETA.md`](../docs/GUIA_COMPLETA.md) · Backlog de historias (CSV): [`../docs/jira-backlog.csv`](../docs/jira-backlog.csv) · Flujo de trabajo (GitFlow): [`../docs/GITFLOW.md`](../docs/GITFLOW.md)
 
 ## Requisitos
 
