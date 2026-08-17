@@ -4,6 +4,7 @@ import Sidebar, { type NavSection } from '@/components/Sidebar'
 import NotificationBell from '@/components/NotificationBell'
 import SessionWatcher from '@/components/SessionWatcher'
 import ThemeInit from '@/components/ThemeInit'
+import HeaderUser from '@/components/HeaderUser'
 import { can } from '@/lib/permissions'
 import { ConfirmProvider } from '@/components/ConfirmProvider'
 import { ToastProvider } from '@/components/ToastProvider'
@@ -58,9 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar sections={sections} session={session} />
       <div className="flex flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-6">
-          <div className="text-sm font-medium text-muted">
-            {session.name} · {session.email}
-          </div>
+          <HeaderUser name={session.name} email={session.email} />
           <div className="flex items-center gap-4">
             <NotificationBell />
             <span className="rounded-full bg-brand-mint px-3 py-1 text-xs font-semibold text-brand-forest">
