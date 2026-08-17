@@ -7,10 +7,10 @@ export default function SessionWatcher({ intervalMs = 30000 }: { intervalMs?: nu
     let active = true
     let es: EventSource | null = null
 
-    function redirect() {
+    function redirect(reason?: string) {
       // Recarga completa a propósito: purga estado en memoria y cookies obsoletas
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign('/login')
+      window.location.assign(`/login${reason ? `?reason=${reason}` : ''}`)
     }
 
     function connectSSE() {
@@ -21,7 +21,7 @@ export default function SessionWatcher({ intervalMs = 30000 }: { intervalMs?: nu
           const data = JSON.parse(event.data)
           if (data.type === 'revoked') {
             es?.close()
-            redirect()
+            redirect('inactiva')
           }
         } catch {
           // Evento no JSON (p.ej. heartbeat): ignorar
