@@ -5,6 +5,8 @@ import { Ban, CheckCircle2, FilePlus2, Plus, Search } from 'lucide-react'
 import { formatMoney } from '@/lib/utils'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
+import { useConfirm } from '@/components/ConfirmProvider'
+import { useToast } from '@/components/ToastProvider'
 
 type Customer = { id: string; name: string }
 type Invoice = {
@@ -38,7 +40,9 @@ export default function FacturasPage() {
   const [payAmount, setPayAmount] = useState('')
   const [payMethod, setPayMethod] = useState('TRANSFERENCIA')
   const [form, setForm] = useState({ customerId: '', subtotal: 0 })
-  const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  const confirmDialog = useConfirm()
+  const toast = useToast()
 
   const load = useCallback(async () => {
     const url = statusFilter ? `/api/invoices?status=${statusFilter}` : '/api/invoices'
@@ -66,7 +70,7 @@ export default function FacturasPage() {
       body: JSON.stringify(form),
     })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: `Factura #${data.invoice?.number} creada` })
+    data.error ? toast.error(data.error) : toast.success(`Factura #${data.invoice?.number} creada`)
     setCreating(false)
     setForm({ customerId: '', subtotal: 0 })
     load()
@@ -79,17 +83,21 @@ export default function FacturasPage() {
       body: JSON.stringify({ amount: Number(payAmount), method: payMethod }),
     })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Pago registrado' })
+    data.error ? toast.error(data.error) : toast.success('Pago registrado')
     setPaying(null)
     setPayAmount('')
     load()
   }
 
   async function handleCancel(inv: Invoice) {
-    if (!confirm(`¿Cancelar la factura #${inv.number}?`)) return
+    if (!(await confirmDialog({ title: 'Cancelar factura', message: `¿Cancelar la factura #${inv.number}?`, confirmLabel: 'Cancelar', danger: true }))) return
     const res = await fetch(`/api/invoices?id=${inv.id}`, { method: 'DELETE' })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Factura cancelada' })
+    if (data.error) {
+      toast.error(data.error)
+    } else {
+      toast.success('Factura cancelada')
+    }
     load()
   }
 
@@ -108,12 +116,6 @@ export default function FacturasPage() {
           </button>
         </Tooltip>
       </PageHeader>
-
-      {message && (
-        <div className={`rounded-lg px-4 py-3 text-sm font-medium ${message.type === 'ok' ? 'bg-brand-mint text-brand-forest' : 'bg-red-50 text-red-600'}`}>
-          {message.text}
-        </div>
-      )}
 
       {creating && (
         <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">

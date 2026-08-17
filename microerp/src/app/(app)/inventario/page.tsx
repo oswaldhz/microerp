@@ -5,6 +5,8 @@ import { PackagePlus, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-rea
 import { formatMoney } from '@/lib/utils'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
+import { useConfirm } from '@/components/ConfirmProvider'
+import { useToast } from '@/components/ToastProvider'
 
 type Category = { id: string; name: string }
 type Supplier = { id: string; name: string }
@@ -40,8 +42,10 @@ export default function InventarioPage() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState<Omit<Product, 'id'>>(EMPTY)
-  const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [recommendation, setRecommendation] = useState<{ productId: string; avgDailySales: number; suggestedQty: number } | null>(null)
+
+  const confirmDialog = useConfirm()
+  const toast = useToast()
 
   async function load() {
     const [p, c, s] = await Promise.all([
@@ -79,10 +83,10 @@ export default function InventarioPage() {
     })
     const data = await res.json()
     if (!res.ok) {
-      setMessage({ type: 'error', text: data.error ?? 'Error guardando producto' })
+      toast.error(data.error ?? 'Error guardando producto')
       return
     }
-    setMessage({ type: 'ok', text: creating ? 'Producto creado' : 'Producto actualizado' })
+    toast.success(creating ? 'Producto creado' : 'Producto actualizado')
     setCreating(false)
     setEditing(null)
     setForm(EMPTY)
@@ -90,10 +94,14 @@ export default function InventarioPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('¿Eliminar este producto?')) return
+    if (!(await confirmDialog({ title: 'Eliminar', message: '¿Eliminar este producto?', confirmLabel: 'Eliminar', danger: true }))) return
     const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Producto eliminado' })
+    if (data.error) {
+      toast.error(data.error)
+    } else {
+      toast.success('Producto eliminado')
+    }
     load()
   }
 
@@ -133,12 +141,6 @@ export default function InventarioPage() {
           </button>
         </Tooltip>
       </PageHeader>
-
-      {message && (
-        <div className={`rounded-lg px-4 py-3 text-sm font-medium ${message.type === 'ok' ? 'bg-brand-mint text-brand-forest' : 'bg-red-50 text-red-600'}`}>
-          {message.text}
-        </div>
-      )}
 
       {(creating || editing) && (
         <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
@@ -280,7 +282,7 @@ export default function InventarioPage() {
               if (e.key === 'Enter') {
                 const res = await fetch('/api/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: (e.target as HTMLInputElement).value }) })
                 const data = await res.json()
-                setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Categoría creada' })
+                data.error ? toast.error(data.error) : toast.success('Categoría creada')
                 ;(e.target as HTMLInputElement).value = ''
                 load()
               }

@@ -5,6 +5,8 @@ import { Ban, ClipboardList, PackageCheck, Plus } from 'lucide-react'
 import { formatMoney } from '@/lib/utils'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
+import { useConfirm } from '@/components/ConfirmProvider'
+import { useToast } from '@/components/ToastProvider'
 
 type Supplier = { id: string; name: string }
 type Product = { id: string; name: string; sku: string; purchasePrice: number | string }
@@ -34,7 +36,9 @@ export default function ComprasPage() {
   const [creating, setCreating] = useState(false)
   const [supplierId, setSupplierId] = useState('')
   const [lines, setLines] = useState<{ productId: string; quantity: number }[]>([{ productId: '', quantity: 1 }])
-  const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  const confirmDialog = useConfirm()
+  const toast = useToast()
 
   async function load() {
     const [o, s, p] = await Promise.all([
@@ -61,7 +65,7 @@ export default function ComprasPage() {
       }),
     })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: `Orden de compra #${data.order?.number} creada` })
+    data.error ? toast.error(data.error) : toast.success('Orden de compra #' + data.order?.number + ' creada')
     setCreating(false)
     setSupplierId('')
     setLines([{ productId: '', quantity: 1 }])
@@ -69,15 +73,15 @@ export default function ComprasPage() {
   }
 
   async function handleAction(order: Order, action: 'receive' | 'cancel') {
-    if (action === 'cancel' && !confirm(`¿Cancelar la orden #${order.number}?`)) return
-    if (action === 'receive' && !confirm(`¿Marcar la orden #${order.number} como recibida? Se actualizará el stock.`)) return
+    if (action === 'cancel' && !(await confirmDialog({ title: 'Cancelar orden', message: `¿Cancelar la orden #${order.number}?`, confirmLabel: 'Cancelar', danger: true }))) return
+    if (action === 'receive' && !(await confirmDialog({ title: 'Recibir orden', message: `¿Marcar la orden #${order.number} como recibida? Se actualizará el stock.`, confirmLabel: 'Recibir' }))) return
     const res = await fetch(`/api/purchase-orders/${order.id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: action === 'receive' ? 'Orden recibida, stock actualizado' : 'Orden cancelada' })
+    data.error ? toast.error(data.error) : toast.success(action === 'receive' ? 'Orden recibida, stock actualizado' : 'Orden cancelada')
     load()
   }
 
@@ -96,12 +100,6 @@ export default function ComprasPage() {
           </button>
         </Tooltip>
       </PageHeader>
-
-      {message && (
-        <div className={`rounded-lg px-4 py-3 text-sm font-medium ${message.type === 'ok' ? 'bg-brand-mint text-brand-forest' : 'bg-red-50 text-red-600'}`}>
-          {message.text}
-        </div>
-      )}
 
       {creating && (
         <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
