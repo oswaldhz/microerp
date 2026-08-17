@@ -138,6 +138,10 @@ export const recommendationSchema = z.object({
   days: z.coerce.number().int().min(1).max(90).default(30),
 })
 
+export const employeeStatusSchema = z.object({
+  active: z.boolean(),
+})
+
 export const idParamSchema = z.object({
   id: z.string().min(1),
 })

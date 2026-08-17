@@ -80,6 +80,30 @@ export async function deleteEmployee(employeeId: string, companyId: string) {
   return { ok: true }
 }
 
+export async function setEmployeeStatus(
+  employeeId: string,
+  companyId: string,
+  active: boolean,
+  actorUserId?: string,
+) {
+  const existing = await prisma.employee.findFirst({ where: { id: employeeId, companyId } })
+  if (!existing) throw new Error('Empleado no encontrado')
+
+  const employee = await prisma.employee.update({ where: { id: employeeId }, data: { active } })
+
+  if (existing.email) {
+    const user = await prisma.user.findUnique({ where: { email: existing.email } })
+    if (user && user.companyId === companyId) {
+      if (!active && user.id === actorUserId) {
+        throw new Error('No puedes darte de baja a ti mismo')
+      }
+      await prisma.user.update({ where: { id: user.id }, data: { active } })
+    }
+  }
+
+  return employee
+}
+
 export async function listEmployees(companyId: string, search?: string) {
   return prisma.employee.findMany({
     where: {

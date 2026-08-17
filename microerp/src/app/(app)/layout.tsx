@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
 import Sidebar, { type NavSection } from '@/components/Sidebar'
 import NotificationBell from '@/components/NotificationBell'
+import SessionWatcher from '@/components/SessionWatcher'
 import { can } from '@/lib/permissions'
 
 const NAV_SECTIONS: NavSection[] = [
@@ -49,6 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
+      <SessionWatcher />
       <Sidebar sections={sections} session={session} />
       <div className="flex flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-line bg-surface px-6">

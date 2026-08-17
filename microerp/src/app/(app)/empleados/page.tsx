@@ -61,6 +61,13 @@ export default function EmpleadosPage() {
       columns={columns}
       fields={fields}
       searchPlaceholder="Buscar empleado…"
+      toggle={{
+        key: 'active',
+        activeLabel: 'Dar de baja',
+        inactiveLabel: 'Dar de alta',
+        activeConfirm: '¿Dar de baja a este empleado? Se cerrará su sesión inmediatamente y no podrá entrar de nuevo.',
+        inactiveConfirm: '¿Dar de alta a este empleado? Podrá volver a iniciar sesión.',
+      }}
     />
   )
 }
