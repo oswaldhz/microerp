@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { requirePermission, serverError, badRequest } from '@/lib/api-helpers'
-import { createEmployee, updateEmployee, deleteEmployee, listEmployees, getEmployeeStats, createLoginUser, updateLoginUser } from '@/services/employees.service'
+import { createEmployee, updateEmployee, deleteEmployee, listEmployees, getEmployeeStats, createLoginUser, updateLoginUser, setEmployeeStatus } from '@/services/employees.service'
 import { hashPassword } from '@/services/auth.service'
-import { employeeSchema, parseError } from '@/lib/validators'
+import { employeeSchema, employeeStatusSchema, parseError } from '@/lib/validators'
 import { logAudit } from '@/services/audit.service'
 
 export async function GET(request: NextRequest) {
@@ -97,6 +97,32 @@ export async function PUT(request: NextRequest) {
       entity: 'EMPLOYEE',
       entityId: employee.id,
       details: `Empleado "${employee.name}" actualizado`,
+    })
+    return NextResponse.json({ employee })
+  } catch (error) {
+    return serverError(error)
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const session = await getSession()
+  const checked = requirePermission(session, 'employees.manage')
+  if (checked instanceof NextResponse) return checked
+
+  try {
+    const id = request.nextUrl.searchParams.get('id') ?? ''
+    const body = await request.json()
+    const parsed = employeeStatusSchema.safeParse(body)
+    if (!parsed.success) return badRequest(parseError(parsed.error))
+
+    const employee = await setEmployeeStatus(id, checked.companyId, parsed.data.active, checked.userId)
+    await logAudit({
+      userId: checked.userId,
+      companyId: checked.companyId,
+      action: parsed.data.active ? 'ENABLE_EMPLOYEE' : 'DISABLE_EMPLOYEE',
+      entity: 'EMPLOYEE',
+      entityId: employee.id,
+      details: `Empleado "${employee.name}" ${parsed.data.active ? 'dado de alta' : 'dado de baja'}`,
     })
     return NextResponse.json({ employee })
   } catch (error) {

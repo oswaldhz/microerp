@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Inbox, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Inbox, Pencil, Plus, Search, Trash2, UserCheck, UserX } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
 import { formatPhone, normalizePhone } from '@/lib/utils'
@@ -12,6 +12,14 @@ export type Field = {
   type?: 'text' | 'number' | 'email' | 'select' | 'date' | 'tel' | 'password'
   options?: { value: string; label: string }[]
   required?: boolean
+}
+
+export type ToggleAction = {
+  key: string
+  activeLabel: string
+  inactiveLabel: string
+  activeConfirm: string
+  inactiveConfirm: string
 }
 
 export type Column<T> = {
@@ -33,6 +41,7 @@ export default function CrudTable<T extends { id: string }>({
   searchPlaceholder = 'Buscar…',
   subtitle,
   emptyHint,
+  toggle,
 }: {
   title: string
   description: string
@@ -42,6 +51,7 @@ export default function CrudTable<T extends { id: string }>({
   searchPlaceholder?: string
   subtitle?: (rows: T[]) => React.ReactNode
   emptyHint?: string
+  toggle?: ToggleAction
 }) {
   const [rows, setRows] = useState<T[]>([])
   const [query, setQuery] = useState('')
@@ -121,6 +131,24 @@ export default function CrudTable<T extends { id: string }>({
     const res = await fetch(`/api/${entityKey}?id=${id}`, { method: 'DELETE' })
     const data = await res.json()
     setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Registro eliminado' })
+    load()
+  }
+
+  async function handleToggle(row: T) {
+    if (!toggle) return
+    const isActive = Boolean((row as Record<string, unknown>)[toggle.key])
+    if (!confirm(isActive ? toggle.activeConfirm : toggle.inactiveConfirm)) return
+    const res = await fetch(`/api/${entityKey}?id=${row.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [toggle.key]: !isActive }),
+    })
+    const data = await res.json()
+    setMessage(
+      data.error
+        ? { type: 'error', text: data.error }
+        : { type: 'ok', text: isActive ? toggle.inactiveLabel : toggle.activeLabel },
+    )
     load()
   }
 
@@ -251,11 +279,27 @@ export default function CrudTable<T extends { id: string }>({
                         <Pencil size={15} />
                       </button>
                     </Tooltip>
-                    <Tooltip label="Eliminar">
-                      <button onClick={() => handleDelete(row.id)} className="rounded p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600">
-                        <Trash2 size={15} />
-                      </button>
-                    </Tooltip>
+                    {toggle ? (
+                      (() => {
+                        const isActive = Boolean((row as Record<string, unknown>)[toggle.key])
+                        return (
+                          <Tooltip label={isActive ? toggle.activeLabel : toggle.inactiveLabel}>
+                            <button
+                              onClick={() => handleToggle(row)}
+                              className={`rounded p-1.5 transition hover:bg-brand-mint ${isActive ? 'text-red-400 hover:text-red-600' : 'text-brand-leaf hover:text-brand-forest'}`}
+                            >
+                              {isActive ? <UserX size={15} /> : <UserCheck size={15} />}
+                            </button>
+                          </Tooltip>
+                        )
+                      })()
+                    ) : (
+                      <Tooltip label="Eliminar">
+                        <button onClick={() => handleDelete(row.id)} className="rounded p-1.5 text-red-400 transition hover:bg-red-50 hover:text-red-600">
+                          <Trash2 size={15} />
+                        </button>
+                      </Tooltip>
+                    )}
                   </div>
                 </td>
               </tr>
