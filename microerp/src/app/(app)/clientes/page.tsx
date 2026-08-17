@@ -30,7 +30,7 @@ const columns: Column<Customer>[] = [
 const fields: Field[] = [
   { key: 'name', label: 'Nombre completo', required: true },
   { key: 'email', label: 'Correo electrónico', type: 'email' },
-  { key: 'phone', label: 'Teléfono' },
+  { key: 'phone', label: 'Teléfono', type: 'tel' },
   { key: 'address', label: 'Dirección' },
   {
     key: 'level',
