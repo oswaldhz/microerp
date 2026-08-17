@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  VENDEDOR
+  CONTADOR
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+}
+
+enum CustomerLevel {
+  BRONCE
+  PLATA
+  ORO
+}
+
+enum SaleStatus {
+  COMPLETADA
+  DEVUELTA
+}
+
+enum InvoiceStatus {
+  PENDIENTE
+  PAGADA
+  CANCELADA
+}
+
+enum PurchaseOrderStatus {
+  PENDIENTE
+  RECIBIDA
+  CANCELADA
+}
+
+enum NotificationType {
+  STOCK_CRITICO
+  PROVEEDOR_PENDIENTE
+  RENDIMIENTO
+  CLIENTE
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  rnc       String?
+  address   String?
+  phone     String?
+  currency  String   @default("DOP")
+  createdAt DateTime @default(now())
+
+  users          User[]
+  employees      Employee[]
+  categories     Category[]
+  products       Product[]
+  customers      Customer[]
+  suppliers      Supplier[]
+  sales          Sale[]
+  expenses       Expense[]
+  invoices       Invoice[]
+  payments       Payment[]
+  purchaseOrders PurchaseOrder[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VENDEDOR)
+  active       Boolean  @default(true)
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
+  createdAt    DateTime @default(now())
+
+  sales     Sale[]
+  auditLogs AuditLog[]
+}
+
+model Employee {
+  id         String   @id @default(cuid())
+  name       String
+  position   String
+  phone      String?
+  email      String?
+  salary     Decimal  @default(0)
+  commission Decimal  @default(0)
+  active     Boolean  @default(true)
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  sales Sale[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  products Product[]
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  sku           String
+  name          String
+  description   String?
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  purchasePrice Decimal
+  salePrice     Decimal
+  stock         Int      @default(0)
+  minStock      Int      @default(5)
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now())
+
+  saleItems     SaleItem[]
+  purchaseItems PurchaseOrderItem[]
+}
+
+model Customer {
+  id        String        @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  level     CustomerLevel @default(BRONCE)
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id])
+  createdAt DateTime      @default(now())
+
+  sales    Sale[]
+  invoices Invoice[]
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
+}
+
+model Sale {
+  id            String        @id @default(cuid())
+  number        Int
+  subtotal      Decimal
+  discount      Decimal       @default(0)
+  tax           Decimal       @default(0)
+  total         Decimal
+  paymentMethod PaymentMethod @default(EFECTIVO)
+  status        SaleStatus    @default(COMPLETADA)
+  customerId    String?
+  customer      Customer?     @relation(fields: [customerId], references: [id])
+  employeeId    String?
+  employee      Employee?     @relation(fields: [employeeId], references: [id])
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  companyId     String
+  company       Company       @relation(fields: [companyId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  items    SaleItem[]
+  payments Payment[]
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal
+  subtotal  Decimal
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  amount    Decimal
+  method    PaymentMethod @default(EFECTIVO)
+  date      DateTime      @default(now())
+  saleId    String?
+  sale      Sale?         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  invoiceId String?
+  invoice   Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  category    String
+  amount      Decimal
+  date        DateTime @default(now())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  number    Int
+  customerId String?
+  customer  Customer?     @relation(fields: [customerId], references: [id])
+  subtotal  Decimal
+  tax       Decimal       @default(0)
+  total     Decimal
+  status    InvoiceStatus @default(PENDIENTE)
+  issueDate DateTime      @default(now())
+  dueDate   DateTime?
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id])
+  createdAt DateTime      @default(now())
+
+  payments Payment[]
+}
+
+model PurchaseOrder {
+  id         String              @id @default(cuid())
+  number     Int
+  supplierId String
+  supplier   Supplier            @relation(fields: [supplierId], references: [id])
+  status     PurchaseOrderStatus @default(PENDIENTE)
+  total      Decimal             @default(0)
+  companyId  String
+  company    Company             @relation(fields: [companyId], references: [id])
+  createdAt  DateTime            @default(now())
+
+  items PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String         @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitPrice       Decimal
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  companyId String
+  company   Company          @relation(fields: [companyId], references: [id])
+  createdAt DateTime         @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+}
