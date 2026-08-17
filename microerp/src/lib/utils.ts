@@ -9,6 +9,17 @@ export function formatMoney(value: number | string | null | undefined): string {
   }).format(n)
 }
 
+export function normalizePhone(value: string | null | undefined): string {
+  return (value ?? '').replace(/\D/g, '')
+}
+
+export function formatPhone(value: string | null | undefined): string {
+  const d = normalizePhone(value).slice(-10)
+  if (d.length <= 3) return d
+  if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
+}
+
 export function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
 }

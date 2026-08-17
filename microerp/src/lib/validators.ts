@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { normalizePhone } from '@/lib/utils'
 
 export const loginSchema = z.object({
   email: z.string().email('Correo inválido'),
@@ -9,7 +10,12 @@ export const companySchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
   rnc: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
+  phone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v ? normalizePhone(v) : v))
+    .refine((v) => !v || v.length === 10, { message: 'El teléfono debe tener 10 dígitos' }),
 })
 
 export const userSchema = z.object({
@@ -38,7 +44,12 @@ export const categorySchema = z.object({
 export const customerSchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
   email: z.string().email('Correo inválido').optional().or(z.literal('')).nullable(),
-  phone: z.string().optional().nullable(),
+  phone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v ? normalizePhone(v) : v))
+    .refine((v) => !v || v.length === 10, { message: 'El teléfono debe tener 10 dígitos' }),
   address: z.string().optional().nullable(),
   level: z.enum(['BRONCE', 'PLATA', 'ORO']).default('BRONCE'),
 })
@@ -46,7 +57,12 @@ export const customerSchema = z.object({
 export const supplierSchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
   contactName: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
+  phone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v ? normalizePhone(v) : v))
+    .refine((v) => !v || v.length === 10, { message: 'El teléfono debe tener 10 dígitos' }),
   email: z.string().email('Correo inválido').optional().or(z.literal('')).nullable(),
   address: z.string().optional().nullable(),
 })
@@ -54,7 +70,12 @@ export const supplierSchema = z.object({
 export const employeeSchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
   position: z.string().min(2, 'El cargo es obligatorio'),
-  phone: z.string().optional().nullable(),
+  phone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v ? normalizePhone(v) : v))
+    .refine((v) => !v || v.length === 10, { message: 'El teléfono debe tener 10 dígitos' }),
   email: z.string().email('Correo inválido').optional().or(z.literal('')).nullable(),
   salary: z.coerce.number().nonnegative('El salario no puede ser negativo'),
   commission: z.coerce.number().min(0).max(100, 'La comisión no puede superar 100%'),
