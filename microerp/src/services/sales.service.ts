@@ -49,6 +49,11 @@ export async function createSale(input: CreateSaleInput) {
   })
 
   const subtotal = round2(lines.reduce((acc, l) => acc + l.lineSubtotal, 0))
+
+  if (discount > subtotal) {
+    throw new Error('El descuento no puede exceder el subtotal de la venta')
+  }
+
   const totals = computeTotals(subtotal, discount)
   const number = await nextSaleNumber(input.companyId)
 

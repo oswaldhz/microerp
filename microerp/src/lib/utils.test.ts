@@ -23,9 +23,9 @@ describe('utils matemáticas', () => {
     expect(totals.total).toBe(round2(900 + 900 * ITBIS_RATE))
   })
 
-  it('nunca deja el total negativo aunque el descuento supere el subtotal', () => {
+  it('recorta el descuento al subtotal y nunca deja el total negativo', () => {
     const totals = computeTotals(500, 999)
-    expect(totals.discount).toBe(999)
+    expect(totals.discount).toBe(500)
     expect(totals.tax).toBe(0)
     expect(totals.total).toBe(0)
   })

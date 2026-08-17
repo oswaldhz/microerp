@@ -20,7 +20,7 @@ export function computeTotals(subtotal: number, discount: number): {
   total: number
 } {
   const s = round2(subtotal)
-  const d = round2(discount)
+  const d = round2(Math.min(discount, s))
   const taxable = round2(Math.max(s - d, 0))
   const tax = round2(taxable * ITBIS_RATE)
   const total = round2(taxable + tax)
