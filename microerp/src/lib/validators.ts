@@ -67,6 +67,13 @@ export const supplierSchema = z.object({
   address: z.string().optional().nullable(),
 })
 
+export const employeePasswordSchema = z
+  .string()
+  .min(8, 'La contraseña debe tener al menos 8 caracteres')
+  .max(72, 'La contraseña no puede superar 72 caracteres')
+  .regex(/[A-Za-z]/, 'La contraseña debe incluir letras')
+  .regex(/[0-9]/, 'La contraseña debe incluir al menos un número')
+
 export const employeeSchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
   position: z.string().min(2, 'El cargo es obligatorio'),
@@ -79,6 +86,7 @@ export const employeeSchema = z.object({
   email: z.string().email('Correo inválido').optional().or(z.literal('')).nullable(),
   salary: z.coerce.number().nonnegative('El salario no puede ser negativo'),
   commission: z.coerce.number().min(0).max(100, 'La comisión no puede superar 100%'),
+  password: z.union([employeePasswordSchema, z.literal('')]).optional(),
 })
 
 export const expenseSchema = z.object({
