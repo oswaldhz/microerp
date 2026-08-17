@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest) {
   if (checked instanceof NextResponse) return checked
 
   try {
-    const id = request.nextUrl.searchParams.get('id') ?? ''
+    const id = request.nextUrl.searchParams.get('id') ?? checked.companyId
     const body = await request.json()
     const parsed = companySchema.safeParse(body)
     if (!parsed.success) return badRequest(parseError(parsed.error))
