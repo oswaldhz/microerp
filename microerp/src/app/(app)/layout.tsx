@@ -4,6 +4,8 @@ import Sidebar, { type NavSection } from '@/components/Sidebar'
 import NotificationBell from '@/components/NotificationBell'
 import SessionWatcher from '@/components/SessionWatcher'
 import { can } from '@/lib/permissions'
+import { ConfirmProvider } from '@/components/ConfirmProvider'
+import { ToastProvider } from '@/components/ToastProvider'
 
 const NAV_SECTIONS: NavSection[] = [
   {
@@ -64,7 +66,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6">
+          <ConfirmProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </ConfirmProvider>
+        </main>
       </div>
     </div>
   )
