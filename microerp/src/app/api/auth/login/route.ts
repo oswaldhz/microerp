@@ -13,10 +13,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parseError(parsed.error) }, { status: 400 })
     }
 
-    const user = await authenticateUser(parsed.data.email, parsed.data.password)
-    if (!user) {
+    const result = await authenticateUser(parsed.data.email, parsed.data.password)
+    if (!result) {
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
+    if (!result.ok) {
+      return NextResponse.json({ error: 'Tu cuenta está dada de baja. Contacta al administrador.' }, { status: 403 })
+    }
+    const user = result.user
 
     const token = await createSessionToken({
       userId: user.id,

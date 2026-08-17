@@ -2,19 +2,28 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { Role } from '@/generated/prisma/enums'
 
-export async function authenticateUser(email: string, password: string) {
+export type AuthResult =
+  | { ok: true; user: { id: string; name: string; email: string; role: Role; companyId: string } }
+  | { ok: false; reason: 'inactive' }
+
+export async function authenticateUser(email: string, password: string): Promise<AuthResult | null> {
   const user = await prisma.user.findUnique({ where: { email } })
-  if (!user || !user.active) return null
+  if (!user) return null
 
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return null
 
+  if (!user.active) return { ok: false, reason: 'inactive' }
+
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role as Role,
-    companyId: user.companyId,
+    ok: true,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role as Role,
+      companyId: user.companyId,
+    },
   }
 }
 
