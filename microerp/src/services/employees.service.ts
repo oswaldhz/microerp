@@ -9,9 +9,9 @@ export interface EmployeeInput {
   commission: number
 }
 
-export async function createEmployee(companyId: string, data: EmployeeInput) {
+export async function createEmployee(companyId: string, data: EmployeeInput, userId?: string | null) {
   return prisma.employee.create({
-    data: { companyId, ...data, salary: data.salary, commission: data.commission },
+    data: { companyId, ...data, salary: data.salary, commission: data.commission, userId: userId ?? undefined },
   })
 }
 
@@ -64,12 +64,17 @@ export async function updateLoginUser(input: {
   })
 }
 
-export async function updateEmployee(employeeId: string, companyId: string, data: EmployeeInput) {
+export async function updateEmployee(
+  employeeId: string,
+  companyId: string,
+  data: EmployeeInput,
+  userId?: string | null,
+) {
   const existing = await prisma.employee.findFirst({ where: { id: employeeId, companyId } })
   if (!existing) throw new Error('Empleado no encontrado')
   return prisma.employee.update({
     where: { id: employeeId },
-    data: { ...data, salary: data.salary, commission: data.commission },
+    data: { ...data, salary: data.salary, commission: data.commission, userId: userId ?? undefined },
   })
 }
 
@@ -91,14 +96,19 @@ export async function setEmployeeStatus(
 
   const employee = await prisma.employee.update({ where: { id: employeeId }, data: { active } })
 
-  if (existing.email) {
-    const user = await prisma.user.findUnique({ where: { email: existing.email } })
-    if (user && user.companyId === companyId) {
-      if (!active && user.id === actorUserId) {
-        throw new Error('No puedes darte de baja a ti mismo')
-      }
-      await prisma.user.update({ where: { id: user.id }, data: { active } })
+  let user: { id: string } | null = null
+  if (existing.userId) {
+    user = await prisma.user.findFirst({ where: { id: existing.userId, companyId } })
+  } else if (existing.email) {
+    const byEmail = await prisma.user.findUnique({ where: { email: existing.email } })
+    if (byEmail && byEmail.companyId === companyId) user = byEmail
+  }
+
+  if (user) {
+    if (!active && user.id === actorUserId) {
+      throw new Error('No puedes darte de baja a ti mismo')
     }
+    await prisma.user.update({ where: { id: user.id }, data: { active } })
   }
 
   return employee
