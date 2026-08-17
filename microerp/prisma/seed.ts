@@ -127,8 +127,10 @@ async function main() {
     ],
   })
 
+  const carlosUser = await prisma.user.findUniqueOrThrow({ where: { email: 'carlos@urban-shoes.com' } })
+
   const employee1 = await prisma.employee.create({
-    data: { companyId: company.id, name: 'Carlos Vendedor', position: 'Vendedor', phone: '(809) 555-2001', email: 'carlos@urban-shoes.com', salary: 22000, commission: 2 },
+    data: { companyId: company.id, name: 'Carlos Vendedor', position: 'Vendedor', phone: '(809) 555-2001', email: 'carlos@urban-shoes.com', salary: 22000, commission: 2, userId: carlosUser.id },
   })
   await prisma.employee.create({
     data: { companyId: company.id, name: 'Rosa Díaz', position: 'Vendedora', phone: '(809) 555-2002', email: 'rosa@urban-shoes.com', salary: 22000, commission: 2 },

@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) return badRequest(parseError(parsed.error))
 
     const { password, ...employeeData } = parsed.data
+    let user: { id: string } | null = null
     if (password) {
       if (!employeeData.email) {
         return badRequest('Para dar acceso por correo, el empleado debe tener un correo')
       }
-      await createLoginUser({
+      user = await createLoginUser({
         companyId: checked.companyId,
         name: employeeData.name,
         email: employeeData.email,
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const employee = await createEmployee(checked.companyId, employeeData)
+    const employee = await createEmployee(checked.companyId, employeeData, user?.id)
     await logAudit({
       userId: checked.userId,
       companyId: checked.companyId,
@@ -77,11 +78,12 @@ export async function PUT(request: NextRequest) {
     if (!parsed.success) return badRequest(parseError(parsed.error))
 
     const { password, ...employeeData } = parsed.data
+    let user: { id: string } | null = null
     if (password) {
       if (!employeeData.email) {
         return badRequest('Para cambiar la contraseña el empleado debe tener un correo')
       }
-      await updateLoginUser({
+      user = await updateLoginUser({
         companyId: checked.companyId,
         name: employeeData.name,
         email: employeeData.email,
@@ -89,7 +91,7 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    const employee = await updateEmployee(id, checked.companyId, employeeData)
+    const employee = await updateEmployee(id, checked.companyId, employeeData, user?.id)
     await logAudit({
       userId: checked.userId,
       companyId: checked.companyId,
