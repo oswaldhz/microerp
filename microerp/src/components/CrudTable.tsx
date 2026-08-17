@@ -116,7 +116,7 @@ export default function CrudTable<T extends { id: string }>({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({ error: `Error del servidor (${res.status})` }))
     if (!res.ok) {
       setMessage({ type: 'error', text: data.error ?? 'Error al guardar' })
       return
@@ -129,7 +129,7 @@ export default function CrudTable<T extends { id: string }>({
   async function handleDelete(id: string) {
     if (!confirm('¿Eliminar este registro?')) return
     const res = await fetch(`/api/${entityKey}?id=${id}`, { method: 'DELETE' })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({ error: `Error del servidor (${res.status})` }))
     setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Registro eliminado' })
     load()
   }
@@ -143,7 +143,7 @@ export default function CrudTable<T extends { id: string }>({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [toggle.key]: !isActive }),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({ error: `Error del servidor (${res.status})` }))
     setMessage(
       data.error
         ? { type: 'error', text: data.error }
