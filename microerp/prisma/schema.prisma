@@ -52,6 +52,7 @@ enum NotificationType {
 model Company {
   id        String   @id @default(cuid())
   name      String
+  appName   String?
   rnc       String?
   address   String?
   phone     String?
@@ -79,6 +80,7 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(VENDEDOR)
+  avatar       String?
   active       Boolean  @default(true)
   companyId    String
   company      Company  @relation(fields: [companyId], references: [id])

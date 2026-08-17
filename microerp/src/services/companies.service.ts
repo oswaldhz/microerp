@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 
 export interface CompanyInput {
   name: string
+  appName?: string | null
   rnc?: string | null
   address?: string | null
   phone?: string | null

@@ -8,6 +8,12 @@ export const loginSchema = z.object({
 
 export const companySchema = z.object({
   name: z.string().min(2, 'El nombre es obligatorio'),
+  appName: z
+    .string()
+    .trim()
+    .max(40, 'El nombre no puede superar 40 caracteres')
+    .optional()
+    .nullable(),
   rnc: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   phone: z
