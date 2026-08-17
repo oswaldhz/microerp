@@ -4,6 +4,7 @@ import {
   supplierSchema,
   employeeSchema,
   companySchema,
+  employeeStatusSchema,
 } from '@/lib/validators'
 
 describe('validación de teléfono (canónico de 10 dígitos)', () => {
@@ -76,5 +77,18 @@ describe('política de contraseña de empleado', () => {
   it('acepta contraseña ausente o vacía (sin cambio)', () => {
     expect(employeeSchema.safeParse(base).success).toBe(true)
     expect(employeeSchema.safeParse({ ...base, password: '' }).success).toBe(true)
+  })
+})
+
+describe('cambio de estado de empleado (activo / de baja)', () => {
+  it('acepta activo o de baja', () => {
+    expect(employeeStatusSchema.safeParse({ active: true }).success).toBe(true)
+    expect(employeeStatusSchema.safeParse({ active: false }).success).toBe(true)
+  })
+
+  it('rechaza valores que no sean booleanos', () => {
+    expect(employeeStatusSchema.safeParse({ active: 'true' }).success).toBe(false)
+    expect(employeeStatusSchema.safeParse({ active: 1 }).success).toBe(false)
+    expect(employeeStatusSchema.safeParse({}).success).toBe(false)
   })
 })

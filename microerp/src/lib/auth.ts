@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { SignJWT, jwtVerify } from 'jose'
 import { Role } from '@/generated/prisma/enums'
+import { prisma } from '@/lib/prisma'
 
 export const SESSION_COOKIE = 'microerp_session'
 
@@ -44,5 +45,14 @@ export async function getSession(): Promise<SessionPayload | null> {
   const store = await cookies()
   const token = store.get(SESSION_COOKIE)?.value
   if (!token) return null
-  return verifySessionToken(token)
+  const session = await verifySessionToken(token)
+  if (!session) return null
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { active: true },
+  })
+  if (!user?.active) return null
+
+  return session
 }
