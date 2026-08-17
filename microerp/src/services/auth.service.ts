@@ -19,7 +19,7 @@ export async function authenticateUser(email: string, password: string) {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10)
+  return bcrypt.hash(password, 12)
 }
 
 export async function createUser(input: {
