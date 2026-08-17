@@ -32,4 +32,10 @@ describe('permisos por rol', () => {
     expect(canAny(Role.VENDEDOR, ['audit.view', 'sales.view'])).toBe(true)
     expect(canAny(Role.VENDEDOR, ['audit.view', 'companies.manage'])).toBe(false)
   })
+
+  it('todos los roles ven Personalización', () => {
+    expect(can(Role.ADMIN, 'personalizacion.view')).toBe(true)
+    expect(can(Role.VENDEDOR, 'personalizacion.view')).toBe(true)
+    expect(can(Role.CONTADOR, 'personalizacion.view')).toBe(true)
+  })
 })

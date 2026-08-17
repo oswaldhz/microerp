@@ -21,6 +21,7 @@ export type Permission =
   | 'audit.view'
   | 'users.manage'
   | 'companies.manage'
+  | 'personalizacion.view'
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ADMIN: [
@@ -44,6 +45,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'audit.view',
     'users.manage',
     'companies.manage',
+    'personalizacion.view',
   ],
   VENDEDOR: [
     'dashboard.view',
@@ -52,6 +54,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'inventory.view',
     'customers.view',
     'customers.manage',
+    'personalizacion.view',
   ],
   CONTADOR: [
     'dashboard.view',
@@ -63,6 +66,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'invoices.view',
     'invoices.manage',
     'reports.view',
+    'personalizacion.view',
   ],
 }
 

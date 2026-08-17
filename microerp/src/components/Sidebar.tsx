@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Truck, Briefcase,
-  Receipt, FileText, ShoppingBag, BarChart3, Settings, Store, LogOut,
+  Receipt, FileText, ShoppingBag, BarChart3, Settings, Store, LogOut, Palette,
 } from 'lucide-react'
 import Tooltip from '@/components/Tooltip'
 import Avatar from '@/components/Avatar'
@@ -24,6 +24,7 @@ const ICONS = {
   compras: ShoppingBag,
   reportes: BarChart3,
   configuracion: Settings,
+  personalizacion: Palette,
 }
 
 export type NavItem = {
