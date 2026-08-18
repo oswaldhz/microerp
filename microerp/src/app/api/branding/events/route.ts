@@ -9,8 +9,10 @@ export async function GET(request: Request) {
   if (checked instanceof NextResponse) return checked
 
   const encoder = new TextEncoder()
+  let cleanup: (() => void) | undefined
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
+      if (request.signal.aborted) return
       const unsubscribe = subscribeBranding(checked.companyId, controller)
       const heartbeat = setInterval(() => {
         try {
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
           // stream cerrado
         }
       }, 20000)
-      request.signal.addEventListener('abort', () => {
+      cleanup = () => {
         clearInterval(heartbeat)
         unsubscribe()
         try {
@@ -27,7 +29,11 @@ export async function GET(request: Request) {
         } catch {
           // ya cerrado
         }
-      })
+      }
+      request.signal.addEventListener('abort', cleanup)
+    },
+    cancel() {
+      cleanup?.()
     },
   })
 
