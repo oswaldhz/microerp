@@ -50,8 +50,12 @@ export default function Sidebar({ sections, session }: { sections: NavSection[];
   return (
     <aside className="flex w-64 flex-col bg-brand-ink text-white">
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-leaf text-white shadow-sm">
-          <Store size={18} />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-leaf text-white shadow-sm">
+          {branding.logo ? (
+            <img src={branding.logo} data-testid="brand-logo" alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Store size={18} />
+          )}
         </div>
         {branding.appName && (
           <span className="truncate font-display text-lg font-bold tracking-tight">{branding.appName}</span>
@@ -92,7 +96,7 @@ export default function Sidebar({ sections, session }: { sections: NavSection[];
 
       <div className="border-t border-white/10 p-3">
         <div className="mb-2 flex items-center gap-2 px-3">
-          <Avatar src={branding.avatar} name={session.name} size={28} />
+          <Avatar name={session.name} size={28} />
           <div className="min-w-0 text-xs text-white/40">
             <p className="truncate">{session.name}</p>
             <p className="truncate">{session.email}</p>
