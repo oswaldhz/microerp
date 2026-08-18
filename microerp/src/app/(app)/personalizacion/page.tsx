@@ -135,7 +135,10 @@ export default function PersonalizacionPage() {
                   data-testid="logo-file-input"
                   accept="image/jpeg,image/png,image/webp"
                   className="hidden"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) => {
+                    setSelectedFile(e.target.files?.[0] ?? null)
+                    e.target.value = ''
+                  }}
                 />
               </label>
               <button

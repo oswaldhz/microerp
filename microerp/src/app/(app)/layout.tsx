@@ -39,7 +39,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/empleados', label: 'Empleados', description: 'Usuarios del sistema y sus roles.', icon: 'empleados' as const, permission: 'employees.view' as const },
       { href: '/configuracion', label: 'Configuración', description: 'Auditoría de actividad y datos de la empresa.', icon: 'configuracion' as const, permission: 'audit.view' as const },
-      { href: '/personalizacion', label: 'Personalización', description: 'Marca, foto de perfil y temas de colores.', icon: 'personalizacion' as const, permission: 'personalizacion.view' as const },
+      { href: '/personalizacion', label: 'Personalización', description: 'Marca, logo y temas de colores.', icon: 'personalizacion' as const, permission: 'personalizacion.view' as const },
     ],
   },
 ]
