@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Check, ImagePlus, Palette, Store } from 'lucide-react'
+import { Check, Palette, Store } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
-import Avatar from '@/components/Avatar'
 import { useToast } from '@/components/ToastProvider'
 import { useBranding } from '@/lib/use-branding'
 import { THEMES, type Theme, applyTheme, storeTheme, getActiveThemeId } from '@/lib/themes'
@@ -11,20 +10,12 @@ import { THEMES, type Theme, applyTheme, storeTheme, getActiveThemeId } from '@/
 export default function PersonalizacionPage() {
   const { branding, refresh } = useBranding()
   const toast = useToast()
-  const [userName, setUserName] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [appName, setAppName] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [savingName, setSavingName] = useState(false)
   const [uploading, setUploading] = useState(false)
-
-  useEffect(() => {
-    fetch('/api/auth/me', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => setUserName(d.user?.name ?? ''))
-      .catch(() => {})
-  }, [])
 
   useEffect(() => {
     if (loaded) return
@@ -64,13 +55,13 @@ export default function PersonalizacionPage() {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
-      const res = await fetch('/api/upload/avatar', { method: 'POST', body: formData })
+      const res = await fetch('/api/upload/logo', { method: 'POST', body: formData })
       const data = await res.json()
       if (!res.ok) {
         toast.error(data.error ?? 'Error subiendo la imagen')
         return
       }
-      toast.success('Foto de perfil actualizada')
+      toast.success('Logo de la marca actualizado')
       setSelectedFile(null)
       await refresh()
     } catch {
@@ -91,7 +82,7 @@ export default function PersonalizacionPage() {
     <div className="space-y-6">
       <PageHeader
         title="Personalización"
-        description="Nombre de la marca, tu foto de perfil y los colores de la aplicación."
+        description="Nombre y logo de la marca, y los colores de la aplicación."
       />
 
       {branding.role === 'ADMIN' && (
@@ -100,9 +91,9 @@ export default function PersonalizacionPage() {
             <Store size={16} className="text-brand-leaf" /> Marca
           </h2>
           <p className="mb-4 text-sm text-muted">
-            Nombre que aparece arriba a la izquierda junto al icono. Déjalo vacío para mostrar solo el icono.
+            Nombre y logo que aparecen arriba a la izquierda. Déjalo vacío para mostrar solo el icono.
           </p>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mb-5 flex flex-wrap items-center gap-2">
             <input
               data-testid="app-name-input"
               value={appName}
@@ -128,40 +119,40 @@ export default function PersonalizacionPage() {
               Ocultar nombre
             </button>
           </div>
-        </div>
-      )}
-
-      <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-        <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-ink">
-          <ImagePlus size={16} className="text-brand-leaf" /> Foto de perfil
-        </h2>
-        <p className="mb-4 text-sm text-muted">JPG, PNG o WebP de hasta 2 MB. Se muestra en el menú y en el encabezado.</p>
-        <div className="flex flex-wrap items-center gap-4">
-          <Avatar src={branding.avatar} name={userName} size={56} />
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="cursor-pointer rounded-lg border border-line-strong px-4 py-2 text-sm font-medium text-muted transition hover:bg-paper">
-              Elegir imagen…
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-              />
-            </label>
-            <button
-              data-testid="upload-avatar"
-              onClick={handleUpload}
-              disabled={!selectedFile || uploading}
-              className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {uploading ? 'Subiendo…' : 'Subir foto'}
-            </button>
-            {selectedFile && (
-              <span className="text-xs text-muted">{selectedFile.name}</span>
-            )}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-brand-mint text-brand-forest shadow-sm">
+              {branding.logo ? (
+                <img src={branding.logo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <Store size={24} />
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="cursor-pointer rounded-lg border border-line-strong px-4 py-2 text-sm font-medium text-muted transition hover:bg-paper">
+                Elegir imagen…
+                <input
+                  type="file"
+                  data-testid="logo-file-input"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <button
+                data-testid="upload-logo"
+                onClick={handleUpload}
+                disabled={!selectedFile || uploading}
+                className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {uploading ? 'Subiendo…' : 'Subir logo'}
+              </button>
+              {selectedFile && (
+                <span className="text-xs text-muted">{selectedFile.name}</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
         <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-ink">
