@@ -5,7 +5,7 @@ export default function Avatar({
   name,
   size = 32,
 }: {
-  src: string | null
+  src?: string | null
   name: string
   size?: number
 }) {
