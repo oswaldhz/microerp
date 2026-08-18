@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 export type Branding = {
   appName: string | null
-  avatar: string | null
+  logo: string | null
   role: string | null
   companyName: string
 }
@@ -12,7 +12,7 @@ export type Branding = {
 export function useBranding() {
   const [branding, setBranding] = useState<Branding>({
     appName: null,
-    avatar: null,
+    logo: null,
     role: null,
     companyName: '',
   })
@@ -23,7 +23,7 @@ export function useBranding() {
       const data = await res.json()
       setBranding({
         appName: data.appName ?? null,
-        avatar: data.avatar ?? null,
+        logo: data.logo ?? null,
         role: data.role ?? null,
         companyName: data.companyName ?? '',
       })
@@ -34,6 +34,14 @@ export function useBranding() {
 
   useEffect(() => {
     refresh()
+  }, [refresh])
+
+  useEffect(() => {
+    const events = new EventSource('/api/branding/events')
+    events.addEventListener('branding', () => {
+      refresh()
+    })
+    return () => events.close()
   }, [refresh])
 
   return { branding, refresh }
