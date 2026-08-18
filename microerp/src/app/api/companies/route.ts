@@ -4,6 +4,7 @@ import { requirePermission, serverError, badRequest } from '@/lib/api-helpers'
 import { createCompany, listCompanies, updateCompany } from '@/services/companies.service'
 import { companySchema, parseError } from '@/lib/validators'
 import { logAudit } from '@/services/audit.service'
+import { emitBrandingEvent } from '@/lib/branding-events'
 
 export async function GET() {
   const session = await getSession()
@@ -49,12 +50,13 @@ export async function PUT(request: NextRequest) {
   if (checked instanceof NextResponse) return checked
 
   try {
-    const id = request.nextUrl.searchParams.get('id') ?? ''
+    const id = request.nextUrl.searchParams.get('id') ?? checked.companyId
     const body = await request.json()
     const parsed = companySchema.safeParse(body)
     if (!parsed.success) return badRequest(parseError(parsed.error))
 
     const company = await updateCompany(id, parsed.data)
+    emitBrandingEvent(company.id)
     return NextResponse.json({ company })
   } catch (error) {
     return serverError(error)

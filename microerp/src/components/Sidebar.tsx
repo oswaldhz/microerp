@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Truck, Briefcase,
-  Receipt, FileText, ShoppingBag, BarChart3, Settings, Store, LogOut,
+  Receipt, FileText, ShoppingBag, BarChart3, Settings, Store, LogOut, Palette,
 } from 'lucide-react'
 import Tooltip from '@/components/Tooltip'
+import Avatar from '@/components/Avatar'
+import { useBranding } from '@/lib/use-branding'
 import type { SessionPayload } from '@/lib/auth'
 import type { Permission } from '@/lib/permissions'
 
@@ -22,6 +24,7 @@ const ICONS = {
   compras: ShoppingBag,
   reportes: BarChart3,
   configuracion: Settings,
+  personalizacion: Palette,
 }
 
 export type NavItem = {
@@ -37,6 +40,7 @@ export type NavSection = { title: string; items: NavItem[] }
 export default function Sidebar({ sections, session }: { sections: NavSection[]; session: SessionPayload }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { branding } = useBranding()
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -46,10 +50,16 @@ export default function Sidebar({ sections, session }: { sections: NavSection[];
   return (
     <aside className="flex w-64 flex-col bg-brand-ink text-white">
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-leaf text-white shadow-sm">
-          <Store size={18} />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-leaf text-white shadow-sm">
+          {branding.logo ? (
+            <img src={branding.logo} data-testid="brand-logo" alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Store size={18} />
+          )}
         </div>
-        <span className="font-display text-lg font-bold tracking-tight">MicroERP</span>
+        {branding.appName && (
+          <span className="truncate font-display text-lg font-bold tracking-tight">{branding.appName}</span>
+        )}
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
@@ -85,8 +95,12 @@ export default function Sidebar({ sections, session }: { sections: NavSection[];
       </nav>
 
       <div className="border-t border-white/10 p-3">
-        <div className="mb-2 truncate px-3 text-xs text-white/40">
-          {session.name} · {session.email}
+        <div className="mb-2 flex items-center gap-2 px-3">
+          <Avatar name={session.name} size={28} />
+          <div className="min-w-0 text-xs text-white/40">
+            <p className="truncate">{session.name}</p>
+            <p className="truncate">{session.email}</p>
+          </div>
         </div>
         <Tooltip label="Cierra tu sesión actual" side="right" className="w-full">
           <button

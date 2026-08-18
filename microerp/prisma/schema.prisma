@@ -52,6 +52,8 @@ enum NotificationType {
 model Company {
   id        String   @id @default(cuid())
   name      String
+  appName   String?
+  logo      String?
   rnc       String?
   address   String?
   phone     String?

@@ -5,6 +5,8 @@ import { Minus, Plus, ReceiptText, Search, ShoppingCart, Trash2 } from 'lucide-r
 import { computeTotals, formatMoney } from '@/lib/utils'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
+import { useConfirm } from '@/components/ConfirmProvider'
+import { useToast } from '@/components/ToastProvider'
 
 type Product = {
   id: string
@@ -43,8 +45,10 @@ export default function VentasPage() {
   const [discount, setDiscount] = useState(0)
   const [query, setQuery] = useState('')
   const [sales, setSales] = useState<Sale[]>([])
-  const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const confirmDialog = useConfirm()
+  const toast = useToast()
 
   useEffect(() => {
     Promise.all([
@@ -57,7 +61,7 @@ export default function VentasPage() {
         setCustomers(c.customers ?? [])
         setSales(s.sales ?? [])
       })
-      .catch(() => setMessage({ type: 'error', text: 'Error cargando datos' }))
+      .catch(() => toast.error('Error cargando datos'))
   }, [])
 
   const filtered = useMemo(
@@ -98,7 +102,6 @@ export default function VentasPage() {
   async function checkout() {
     if (cart.length === 0) return
     setLoading(true)
-    setMessage(null)
     try {
       const res = await fetch('/api/sales', {
         method: 'POST',
@@ -112,28 +115,32 @@ export default function VentasPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setMessage({ type: 'error', text: data.error ?? 'Error al procesar la venta' })
+        toast.error(data.error ?? 'Error al procesar la venta')
         return
       }
       const ticket = String(data.sale?.number ?? '').padStart(4, '0')
-      setMessage({ type: 'ok', text: `Ticket #${ticket} — venta registrada por ${formatMoney(data.sale?.total ?? 0)}` })
+      toast.success(`Ticket #${ticket} — venta registrada por ${formatMoney(data.sale?.total ?? 0)}`)
       setCart([])
       setDiscount(0)
       const [p, s] = await Promise.all([fetch('/api/products').then((r) => r.json()), fetch('/api/sales').then((r) => r.json())])
       setProducts(p.products ?? [])
       setSales(s.sales ?? [])
     } catch {
-      setMessage({ type: 'error', text: 'Error de conexión' })
+      toast.error('Error de conexión')
     } finally {
       setLoading(false)
     }
   }
 
   async function refundSale(saleId: string) {
-    if (!confirm('¿Devolver esta venta? Se repondrá el inventario.')) return
+    if (!(await confirmDialog({ title: 'Devolver venta', message: '¿Devolver esta venta? Se repondrá el inventario.', confirmLabel: 'Devolver', danger: true }))) return
     const res = await fetch(`/api/sales/${saleId}/refund`, { method: 'POST' })
     const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Venta devuelta correctamente' })
+    if (data.error) {
+      toast.error(data.error)
+    } else {
+      toast.success('Venta devuelta correctamente')
+    }
     const [p, s] = await Promise.all([fetch('/api/products').then((r) => r.json()), fetch('/api/sales').then((r) => r.json())])
     setProducts(p.products ?? [])
     setSales(s.sales ?? [])
@@ -145,12 +152,6 @@ export default function VentasPage() {
         title="Punto de Venta"
         description="Registra ventas del mostrador, aplica descuentos y devuelve ventas del historial."
       />
-
-      {message && (
-        <div className={`rounded-lg px-4 py-3 text-sm font-medium ${message.type === 'ok' ? 'bg-brand-mint text-brand-forest' : 'bg-red-50 text-red-600'}`}>
-          {message.text}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Catálogo */}

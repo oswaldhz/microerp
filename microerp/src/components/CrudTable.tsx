@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Inbox, Pencil, Plus, Search, Trash2, UserCheck, UserX } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Tooltip from '@/components/Tooltip'
+import { useConfirm } from '@/components/ConfirmProvider'
+import { useToast } from '@/components/ToastProvider'
 import { formatPhone, normalizePhone } from '@/lib/utils'
 
 export type Field = {
@@ -58,7 +60,9 @@ export default function CrudTable<T extends { id: string }>({
   const [editing, setEditing] = useState<T | null>(null)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState<Record<string, string>>({})
-  const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  const confirmDialog = useConfirm()
+  const toast = useToast()
 
   const load = useCallback(async () => {
     try {
@@ -66,7 +70,7 @@ export default function CrudTable<T extends { id: string }>({
       const data = await res.json()
       setRows(data[entityKey] ?? [])
     } catch {
-      setMessage({ type: 'error', text: 'Error cargando datos' })
+      toast.error('Error cargando datos')
     }
   }, [entityKey])
 
@@ -116,39 +120,52 @@ export default function CrudTable<T extends { id: string }>({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({ error: `Error del servidor (${res.status})` }))
     if (!res.ok) {
-      setMessage({ type: 'error', text: data.error ?? 'Error al guardar' })
+      toast.error(data.error ?? 'Error al guardar')
       return
     }
-    setMessage({ type: 'ok', text: creating ? 'Registro creado' : 'Registro actualizado' })
+    toast.success(creating ? 'Registro creado' : 'Registro actualizado')
     resetForm()
     load()
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('¿Eliminar este registro?')) return
+    if (!(await confirmDialog({ title: 'Eliminar', message: '¿Eliminar este registro?', confirmLabel: 'Eliminar', danger: true }))) return
     const res = await fetch(`/api/${entityKey}?id=${id}`, { method: 'DELETE' })
-    const data = await res.json()
-    setMessage(data.error ? { type: 'error', text: data.error } : { type: 'ok', text: 'Registro eliminado' })
+    const data = await res.json().catch(() => ({ error: `Error del servidor (${res.status})` }))
+    if (data.error) {
+      toast.error(data.error)
+    } else {
+      toast.success('Registro eliminado')
+    }
     load()
   }
 
   async function handleToggle(row: T) {
     if (!toggle) return
     const isActive = Boolean((row as Record<string, unknown>)[toggle.key])
-    if (!confirm(isActive ? toggle.activeConfirm : toggle.inactiveConfirm)) return
+    if (
+      !(await confirmDialog({
+        title: isActive ? 'Inactivar' : 'Activar',
+        message: isActive ? toggle.activeConfirm : toggle.inactiveConfirm,
+        confirmLabel: isActive ? toggle.activeLabel : toggle.inactiveLabel,
+        danger: isActive,
+      }))
+    ) {
+      return
+    }
     const res = await fetch(`/api/${entityKey}?id=${row.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [toggle.key]: !isActive }),
     })
-    const data = await res.json()
-    setMessage(
-      data.error
-        ? { type: 'error', text: data.error }
-        : { type: 'ok', text: isActive ? toggle.inactiveLabel : toggle.activeLabel },
-    )
+    const data = await res.json().catch(() => ({ error: `Error del servidor (${res.status})` }))
+    if (data.error) {
+      toast.error(data.error)
+    } else {
+      toast.success(isActive ? toggle.inactiveLabel : toggle.activeLabel)
+    }
     load()
   }
 
@@ -185,12 +202,6 @@ export default function CrudTable<T extends { id: string }>({
           </button>
         </Tooltip>
       </PageHeader>
-
-      {message && (
-        <div className={`rounded-lg px-4 py-3 text-sm font-medium ${message.type === 'ok' ? 'bg-brand-mint text-brand-forest' : 'bg-red-50 text-red-600'}`}>
-          {message.text}
-        </div>
-      )}
 
       {(creating || editing) && (
         <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
