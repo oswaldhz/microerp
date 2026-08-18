@@ -12,17 +12,17 @@ export async function GET() {
     const [company, user] = await Promise.all([
       prisma.company.findUnique({
         where: { id: checked.companyId },
-        select: { name: true, appName: true },
+        select: { name: true, appName: true, logo: true },
       }),
       prisma.user.findUnique({
         where: { id: checked.userId },
-        select: { avatar: true, role: true },
+        select: { role: true },
       }),
     ])
     return NextResponse.json({
       appName: company?.appName ?? null,
       companyName: company?.name ?? '',
-      avatar: user?.avatar ?? null,
+      logo: company?.logo ?? null,
       role: user?.role ?? null,
     })
   } catch (error) {
